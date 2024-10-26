@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:dio/dio.dart';
 
+import 'addBucketList.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -46,6 +48,15 @@ class _MainScreenState extends State<MainScreen>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context){
+            return AddBucketListScreen();
+          }));
+        },
+        shape: CircleBorder(),
+        child: Icon(Icons.add),
+      ),
       appBar: AppBar(
         title: Text('Bucket List'),
         actions: [
