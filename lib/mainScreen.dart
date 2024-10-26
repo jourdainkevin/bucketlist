@@ -31,7 +31,7 @@ class _MainScreenState extends State<MainScreen>{
       });
       showDialog(context: context, builder: (context){
         return AlertDialog(
-          title: Text('Cannot connect to server'),
+          title: Text('Cannot connect to server !'),
         );
       });
       }
