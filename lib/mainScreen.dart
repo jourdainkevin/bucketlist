@@ -1,3 +1,4 @@
+import 'package:bucketlist/viewItemScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -15,6 +16,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen>{
   List<dynamic> bucketListData = [];
   bool isLoading = false;
+  bool isError = false;
 
   Future<void> getData() async {
     setState(() {
@@ -25,16 +27,13 @@ class _MainScreenState extends State<MainScreen>{
       setState(() {
         bucketListData = response.data;
         isLoading = false;
+        isError = false;
       });
     }
     catch (e) {
       setState(() {
         isLoading = false;
-      });
-      showDialog(context: context, builder: (context){
-        return AlertDialog(
-          title: Text('Cannot connect to server !'),
-        );
+        isError = true;
       });
       }
   }
@@ -43,6 +42,43 @@ class _MainScreenState extends State<MainScreen>{
   void initState() {
     getData();
     super.initState();
+  }
+
+  Widget errorWidget({required String errorText}){
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.warning),
+          Text(errorText),
+          ElevatedButton(onPressed: getData, child: Text('Retry'))
+        ],
+      ),
+    );
+  }
+
+  Widget ListDataWidget(){
+    return ListView.builder(
+        itemCount: bucketListData.length,
+        itemBuilder: (BuildContext context, int index){
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListTile(
+              onTap: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context){
+                  return ViewItemScreen(title: bucketListData[index]['item'] ?? "", image: bucketListData[index]['image'] ?? "");
+                }));
+              },
+              leading: CircleAvatar(
+                radius: 25,
+                backgroundImage: NetworkImage(bucketListData[index]['image'] ?? ""),
+              ),
+              title: Text(bucketListData[index]['item'] ?? ""),
+              trailing: Text(bucketListData[index]['cost'].toString() + "€" ?? ""),
+            ),
+          );
+        })
+        ;
   }
 
   @override
@@ -74,21 +110,11 @@ class _MainScreenState extends State<MainScreen>{
         onRefresh: () async{
           getData();
         },
-        child: isLoading ? Center(child: CircularProgressIndicator()) : ListView.builder(
-            itemCount: bucketListData.length,
-            itemBuilder: (BuildContext context, int index){
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ListTile(
-              leading: CircleAvatar(
-                radius: 25,
-                backgroundImage: NetworkImage(bucketListData[index]['image'] ?? ""),
-              ),
-              title: Text(bucketListData[index]['item'] ?? ""),
-              trailing: Text(bucketListData[index]['cost'].toString() + "€" ?? ""),
-            ),
-          );
-        }),
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : isError
+            ? errorWidget(errorText: "Error fetching data...")
+            : ListDataWidget(),
       )
     );
   }
