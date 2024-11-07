@@ -24,11 +24,15 @@ class _MainScreenState extends State<MainScreen>{
     });
     try {
       Response response = await Dio().get('https://bucketlist-572b7-default-rtdb.europe-west1.firebasedatabase.app/bucketlist.json');
-      setState(() {
+      if(response.data is List){
         bucketListData = response.data;
-        isLoading = false;
-        isError = false;
-      });
+      }
+      else{
+        bucketListData = [];
+      }
+      isLoading = false;
+      isError = false;
+      setState(() {});
     }
     catch (e) {
       setState(() {
@@ -58,27 +62,37 @@ class _MainScreenState extends State<MainScreen>{
   }
 
   Widget ListDataWidget(){
-    return ListView.builder(
+    List<dynamic> filteredList = bucketListData.where((element) => element is Map && !element["completed"]).toList();
+
+    return filteredList.length < 1 ? Text("No item on the bucket list") : ListView.builder(
         itemCount: bucketListData.length,
         itemBuilder: (BuildContext context, int index){
           return Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ListTile(
+            child: (bucketListData[index] is Map && !bucketListData[index]["completed"]) ?
+            ListTile(
               onTap: (){
                 Navigator.push(context, MaterialPageRoute(builder: (context){
-                  return ViewItemScreen(title: bucketListData[index]['item'] ?? "", image: bucketListData[index]['image'] ?? "");
-                }));
+                  return ViewItemScreen(
+                      index: index,
+                      completed: bucketListData[index]?['completed'] ?? false,
+                      title: bucketListData[index]?['item'] ?? "",
+                      image: bucketListData[index]?['image'] ?? "");
+                })).then((value){
+                  if(value == "refresh"){
+                    getData();
+                  }
+                });
               },
               leading: CircleAvatar(
                 radius: 25,
-                backgroundImage: NetworkImage(bucketListData[index]['image'] ?? ""),
+                backgroundImage: NetworkImage(bucketListData[index]?['image'] ?? ""),
               ),
-              title: Text(bucketListData[index]['item'] ?? ""),
-              trailing: Text(bucketListData[index]['cost'].toString() + "€" ?? ""),
-            ),
+              title: Text(bucketListData[index]?['item'] ?? ""),
+              trailing: Text(bucketListData[index]?['cost'].toString() ?? ""),
+            ) : SizedBox(),
           );
-        })
-        ;
+        });
   }
 
   @override
@@ -110,11 +124,11 @@ class _MainScreenState extends State<MainScreen>{
         onRefresh: () async{
           getData();
         },
-        child: isLoading
-            ? Center(child: CircularProgressIndicator())
+        child: isLoading ?
+            Center(child: CircularProgressIndicator())
             : isError
-            ? errorWidget(errorText: "Error fetching data...")
-            : ListDataWidget(),
+              ? errorWidget(errorText: "Error fetching data...")
+              : ListDataWidget(),
       )
     );
   }
