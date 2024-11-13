@@ -62,15 +62,18 @@ class _MainScreenState extends State<MainScreen>{
   }
 
   Widget ListDataWidget(){
-    List<dynamic> filteredList = bucketListData.where((element) => element is Map && !element["completed"]).toList();
+    List<dynamic> filteredList = bucketListData
+        .where((element) => element is Map && !(element["completed"] ?? false)).toList();
 
-    return filteredList.length < 1 ? Text("No item on the bucket list") : ListView.builder(
+    return filteredList.length < 1 ?
+    Center(child: Text("No item on the bucket list")) :
+    ListView.builder(
         itemCount: bucketListData.length,
         itemBuilder: (BuildContext context, int index){
-          return Padding(
+          return (bucketListData[index] is Map && !(bucketListData[index]?["completed"]?? false)) ?
+          Padding(
             padding: const EdgeInsets.all(8.0),
-            child: (bucketListData[index] is Map && !bucketListData[index]["completed"]) ?
-            ListTile(
+            child: ListTile(
               onTap: (){
                 Navigator.push(context, MaterialPageRoute(builder: (context){
                   return ViewItemScreen(
@@ -90,8 +93,8 @@ class _MainScreenState extends State<MainScreen>{
               ),
               title: Text(bucketListData[index]?['item'] ?? ""),
               trailing: Text(bucketListData[index]?['cost'].toString() ?? ""),
-            ) : SizedBox(),
-          );
+            ),
+          ) : SizedBox();
         });
   }
 
@@ -101,8 +104,12 @@ class _MainScreenState extends State<MainScreen>{
       floatingActionButton: FloatingActionButton(
         onPressed: (){
           Navigator.push(context, MaterialPageRoute(builder: (context){
-            return AddBucketListScreen();
-          }));
+            return AddBucketListScreen(index: bucketListData.length);
+          })).then((value){
+            if(value == "refresh"){
+              getData();
+            }
+          });
         },
         shape: CircleBorder(),
         child: Icon(Icons.add),
